@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EDI Translation</title>
+</head>
+<body>
+  <textarea id="ediText"></textarea>
+  <button id="submitBtn">Submit</button>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    const axios = require("axios");
+    const fs = require("fs");
+    const path = require("path");
+    // Main function
+async function main() {
+  // Get the EDI text from the textarea
+  const ediText = document.getElementById("ediText").value;
+
+  // Check if Stedi API key was set as secret environment variable
+  if (process.env.hasOwnProperty('stedi-api-key')) {
+    console.log("api key is valid, proceeding\n")
+  } else {
+    console.log('invalid API key set, quitting\n\nplease generate a valid API key on \nhttps://www.stedi.com/app/settings/api-keys\n')
+    // Exit the program
+    process.exit(0);
+  }
+
+  // Create an EDI Core request with input EDI string
+  const requestJson = {
+    input: ediText,
+    input_format: "edi",
+    output_format: "jedi@2.0"
+  }
+
+  // Create a new POST request to EDI Core
+  const request = await axios.request({
+    method: "POST",
+    url: "https://edi-core.stedi.com/2021-06-05/translate",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Key ${process.env['stedi-api-key']}`
+    },
+    data: requestJson
+  }).then(response => {
+    return response.data;
+  })
+    .catch(error => {
+      console.log(error);
+      return error;
+    });
+
+  // Print the EDI Core response
+  console.log(JSON.stringify(request, null, 2));
+
+  // Return the EDI Core response
+  return request;
+}
+
+// Add event listener to submit button
+const submitBtn = document.getElementById("submitBtn");
+submitBtn.addEventListener("click", main);
+ </script>
+</body>
+</html>
